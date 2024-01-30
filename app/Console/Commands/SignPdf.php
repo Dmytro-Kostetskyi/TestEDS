@@ -19,7 +19,7 @@ class SignPdf extends Command
      * @var string
      */
     protected $description = 'Command description';
-    private $password = 'zZ383026';
+    private $password = 'Ukrfin2024';
 
     /**
      * Create a new command instance.
@@ -38,35 +38,28 @@ class SignPdf extends Command
      */
     public function handle()
     {
+        $iErrorCode = 0;
+
         euspe_setcharset(EM_ENCODING_UTF8);
 
+        $keyPath = storage_path('app/key.jks');
+        $keyByteString = file_get_contents($keyPath, FILE_BINARY);
 
         $pdfPath = storage_path('app/Test.pdf');
-        $pdfSignPath = storage_path('app/File-signed-'.date('Y-m-d-H-i-s').'.pdf');
-        $pdfFile = file_get_contents($pdfPath);
-        $pdfByteString = file_get_contents($pdfPath, FILE_BINARY);
+        $pdfSignPath = storage_path('app/File-signed-' . date('Y-m-d-H-i-s') . '.pdf');
 
-        $keyPath = storage_path('app/key.jks');
-        $keyFile = file_get_contents($keyPath);
-        $keyByteString = file_get_contents(storage_path('app/key.jks'), FILE_BINARY);
-
-        $result = null;
-        $context = 0;
-        $iErrorCode = 0;
         $iResult = euspe_init($iErrorCode);
-        $iErrorCode1 = 0;
+        print $iResult ? $this->getError($iErrorCode) : 'The library was successfully initialized ';
         euspe_setruntimeparameter(EU_RESOLVE_OIDS_PARAMETER, false, $iErrorCode);
+        print $iResult ? $this->getError($iErrorCode) : 'The parameter EU_RESOLVE_OIDS_PARAMETER was successfully set ';
         euspe_setruntimeparameter(EU_SIGN_TYPE_PARAMETER, EU_SIGN_TYPE_CADES_X_LONG, $iErrorCode);
+        print $iResult ? $this->getError($iErrorCode) : 'The parameter EU_SIGN_TYPE_PARAMETER was successfully set ';
 
-        // Загрузка ключа
-        euspe_readprivatekeybinary(
-            $keyByteString, $this->password, $iErrorCode1
+        $iResult = euspe_readprivatekeybinary(
+            $keyByteString, $this->password, $iErrorCode
         );
-
-
+        print $iResult ? $this->getError($iErrorCode) : 'The key was successfully loaded ';
         ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-
 //         Формування ЕЦП файлу (Примітка: Розмір файла не обмежений)
         $bExternal = false;
         euspe_signfile(
@@ -76,8 +69,53 @@ class SignPdf extends Command
             $iErrorCode        // Вихідний. Код помилки
         );
 
-        print 'The file ('.$pdfSignPath.') was successfully signed  ';
+        print $iResult ? $this->getError($iErrorCode) : 'The file (' . $pdfSignPath . ') was successfully signed  ';
         return 0;
+
+
+        $result = null;
+        $context = 0;
+
+//        euspe_setcharset(EM_ENCODING_UTF8);
+//
+//        $pdfPath = storage_path('app/Test.pdf');
+//        $pdfSignPath = storage_path('app/File-signed-'.date('Y-m-d-H-i-s').'.pdf');
+//        $pdfByteString = file_get_contents($pdfPath, FILE_BINARY);
+//
+//        $keyPath = storage_path('app/key.jks');
+//        $keyByteString = file_get_contents($keyPath, FILE_BINARY);
+//
+//        $iErrorCode = 0;
+//        $iResult = euspe_init($iErrorCode);
+//
+//        $iErrorCode1 = 0;
+//        euspe_setruntimeparameter(EU_RESOLVE_OIDS_PARAMETER, false, $iErrorCode);
+//        euspe_setruntimeparameter(EU_SIGN_TYPE_PARAMETER, EU_SIGN_TYPE_CADES_X_LONG, $iErrorCode);
+//
+//        $iResult = euspe_readprivatekeybinary(
+//            $keyByteString, $this->password, $iErrorCode1
+//        );
+//
+//        print $iResult? $this->getError($iErrorCode): 'The key was successfully loaded ';
+//;
+//        ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//
+//
+////         Формування ЕЦП файлу (Примітка: Розмір файла не обмежений)
+//        $bExternal = false;
+//        euspe_signfile(
+//            $pdfPath,        // Вхідний. Ім’я файлу з даними
+//            $pdfSignPath,// Вхідний. Ім’я файлу, в який необхідно записати підпис (якщо тип підпису зовнішній) або підписані дані (якщо тип підпису внутрішній)
+//            $bExternal,        // Вхідний. Тип ЕЦП (зовнішний або внутрішній)
+//            $iErrorCode        // Вихідний. Код помилки
+//        );
+//
+//        print $iResult? $this->getError($iErrorCode): 'The file ('.$pdfSignPath.') was successfully signed  ';
+//        return 0;
+//
+//
+//        $result = null;
+//        $context = 0;
 
 
 //                $pdfByteStringResult = '';
@@ -444,15 +482,10 @@ class SignPdf extends Command
     {
         $message = '';
         euspe_setcharset(EM_ENCODING_UTF8);
-
         euspe_geterrdescr($code, $message);
-        file_put_contents(
-            storage_path('app/error.txt'),
-            $message
-        );
-        echo 'sdfgsdfgsdfg' . mb_detect_encoding($message);
 
-        dd($message);
+        return mb_detect_encoding($message);
+
     }
 
     public function strToBin($str)

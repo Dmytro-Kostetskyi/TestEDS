@@ -43,12 +43,17 @@ Route::get('/', function () {
 
 
 Route::post('upload-pdf', function (Request $request) {
-    $keyPath = $request->file('file_jks');
-    $pdfPath = $request->file('file_pdf');
+    $pdfFile = $request->file('file_pdf');
     $password = $request->get('password');
 
-    $pdfSignPath = $pdfPath->path(). '/'.$pdfPath->getClientOriginalName();
-    $keyByteString = file_get_contents($keyPath->store('local'), FILE_BINARY);
+    $keyPath = 'key.jks';
+    $keyByteString = file_get_contents(Storage::disk('local')->path($keyPath), FILE_BINARY);
+    $pdfSignPath = storage_path('File-signed1111222222.pdf');
+
+//    $fileName = uniqid('pdf_') . '.' . $pdfFile->getClientOriginalExtension();
+//    $pdfPath = $pdfFile->storeAs('', $fileName, 'public');
+//
+//dd($pdfPath);
 
     $iErrorCode = 0;
     euspe_setruntimeparameter(EU_RESOLVE_OIDS_PARAMETER, false, $iErrorCode);
@@ -59,16 +64,20 @@ Route::post('upload-pdf', function (Request $request) {
         $keyByteString, $password, $iErrorCode
     );
 
-    $bExternal=false;
+    $pdfTempFile = Storage::disk('local')->path(uniqid('pdf_') . 'temp.pdf');
+    file_put_contents($pdfTempFile, file_get_contents($pdfFile->getRealPath()));
+    $bExternal = false;
     euspe_signfile(
-        $pdfPath->path(),		// Вхідний. Ім’я файлу з даними
+        $pdfTempFile,        // Вхідний. Ім’я файлу з даними
         $pdfSignPath,   // Вхідний. Ім’я файлу, в який необхідно записати підпис (якщо тип підпису зовнішній) або підписані дані (якщо тип підпису внутрішній)
-        $bExternal,		// Вхідний. Тип ЕЦП (зовнішний або внутрішній)
-        $iErrorCode		// Вихідний. Код помилки
+        $bExternal,        // Вхідний. Тип ЕЦП (зовнішний або внутрішній)
+        $iErrorCode        // Вихідний. Код помилки
     );
+dd($iErrorCode);
+//    unlink($pdfTempFile);
 
     $headers = array(
         'Content-Type: application/pdf',
     );
-    return response()->download($pdfSignPath, 'File-signed.pdf', $headers );
+    return response()->download($pdfSignPath, 'File-signed111111111111111111122222222222.pdf', $headers);
 })->name('upload-pdf');
